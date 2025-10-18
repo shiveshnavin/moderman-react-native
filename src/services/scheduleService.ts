@@ -1,14 +1,25 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL, API_ENDPOINTS, DEFAULT_PAGE_SIZE } from '../config/api';
 import { Schedule, ScheduleListResponse } from '../models/Schedule';
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+let apiClient: AxiosInstance;
+
+const getApiClient = (): AxiosInstance => {
+  if (!apiClient) {
+    apiClient = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+  return apiClient;
+};
+
+export const setApiClient = (client: AxiosInstance) => {
+  apiClient = client;
+};
 
 export interface GetSchedulesParams {
   type?: string;
@@ -39,7 +50,7 @@ export const scheduleService = {
       queryParams.sort = ['targetTimestamp,DESC'];
     }
 
-    const response = await apiClient.get<ScheduleListResponse>(
+    const response = await getApiClient().get<ScheduleListResponse>(
       API_ENDPOINTS.SCHEDULES,
       { params: queryParams }
     );
@@ -51,7 +62,7 @@ export const scheduleService = {
    * Approve a schedule (update status to approved)
    */
   async approveSchedule(scheduleId: string): Promise<Schedule> {
-    const response = await apiClient.patch<Schedule>(
+    const response = await getApiClient().patch<Schedule>(
       `${API_ENDPOINTS.SCHEDULES}/${scheduleId}`,
       { status: 'approved' }
     );
@@ -62,7 +73,7 @@ export const scheduleService = {
    * Reject a schedule (update status to rejected)
    */
   async rejectSchedule(scheduleId: string): Promise<Schedule> {
-    const response = await apiClient.patch<Schedule>(
+    const response = await getApiClient().patch<Schedule>(
       `${API_ENDPOINTS.SCHEDULES}/${scheduleId}`,
       { status: 'rejected' }
     );
@@ -73,6 +84,6 @@ export const scheduleService = {
    * Delete a schedule
    */
   async deleteSchedule(scheduleId: string): Promise<void> {
-    await apiClient.delete(`${API_ENDPOINTS.SCHEDULES}/${scheduleId}`);
+    await getApiClient().delete(`${API_ENDPOINTS.SCHEDULES}/${scheduleId}`);
   },
 };
